@@ -1,9 +1,15 @@
 package controllers
+
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
+
 func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 
 	// Connect to database
@@ -43,17 +49,17 @@ func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// success response
-	var respose TransactionsResponse
-	respose.Status = 200
-	respose.Message = "Request success"
-	respose.Data = transactions
+	var response TransactionsResponse
+	response.Status = 200
+	response.Message = "Request success"
+	response.Data = transactions
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
 func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
-	db := connect()
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
@@ -69,24 +75,24 @@ func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 	userId := r.Form.Get("userid")
 	productId := r.Form.Get("productid")
-	quantity := strconv.Atoi(r.Form.Get("quantity"))
+	quantity, _ := strconv.Atoi(r.Form.Get("quantity"))
 
-	_,errQuerry := db.Exec("INSERT INTO transactions(userid, productid, quantity) VALUES (?,?,?);",userId,productId,quantity)
+	_, errQuerry := db.Exec("INSERT INTO transactions(userid, productid, quantity) VALUES (?,?,?);", userId, productId, quantity)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
 func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
-	db := connect()
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
@@ -103,6 +109,7 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	data, _ := db.Query(`SELECT * FROM transactions WHERE id = ?;`, transId)
 
 	if data == nil {
+		var response ErrorResponse
 		response.Status = 400
 		response.Message = fmt.Sprintf("Data using id %s not found", transId)
 		w.WriteHeader(400)
@@ -110,28 +117,27 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	_,errQuerry := db.Query(`DELETE FROM transactions WHERE id = ?;`, transId)
+	_, errQuerry := db.Query(`DELETE FROM transactions WHERE id = ?;`, transId)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
 		w.WriteHeader(200)
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 		w.WriteHeader(500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateTransaction(w http.ResponseWriter, r *http.Request){
-	db := connect()
+func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
-	var response ErrorResponse
 
 	if err != nil {
 		var response ErrorResponse
@@ -147,6 +153,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request){
 	data, _ := db.Query(`SELECT * FROM transactions WHERE id = ?;`, transId)
 
 	if data == nil {
+		var response ErrorResponse
 		response.Status = 400
 		response.Message = fmt.Sprintf("Data using id %s not found", transId)
 		w.WriteHeader(400)
@@ -156,20 +163,20 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request){
 	}
 	userId := r.Form.Get("userid")
 	productId := r.Form.Get("productid")
-	quantity := strconv.Atoi(r.Form.Get("quantity"))
+	quantity, _ := strconv.Atoi(r.Form.Get("quantity"))
 
-	_,errQuerry := db.Exec("UPDATE users set userid = ?, productid = ?, quantity = ? WHERE id = ?;",userId,productId,quantity,transId)
+	_, errQuerry := db.Exec("UPDATE users set userid = ?, productid = ?, quantity = ? WHERE id = ?;", userId, productId, quantity, transId)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
 		w.WriteHeader(200)
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 		w.WriteHeader(500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }

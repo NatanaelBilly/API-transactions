@@ -2,8 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func GetAllProducts(w http.ResponseWriter, r *http.Request) {
@@ -46,17 +50,17 @@ func GetAllProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// success response
-	var respose ProductsResponse
-	respose.Status = 200
-	respose.Message = "Request success"
-	respose.Data = products
+	var response ProductsResponse
+	response.Status = 200
+	response.Message = "Request success"
+	response.Data = products
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
 func InsertNewProduct(w http.ResponseWriter, r *http.Request) {
-	db := connect()
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
@@ -71,24 +75,24 @@ func InsertNewProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := r.Form.Get("name")
-	price := strconv.Atoi(r.Form.Get("price"))
+	price, _ := strconv.Atoi(r.Form.Get("price"))
 
-	_,errQuerry := db.Exec("INSERT INTO products(name, price) VALUES (?,?);",name,price)
+	_, errQuerry := db.Exec("INSERT INTO products(name, price) VALUES (?,?);", name, price)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
 func DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	db := connect()
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
@@ -105,6 +109,7 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	data, _ := db.Query(`SELECT * FROM products WHERE id = ?;`, prodId)
 
 	if data == nil {
+		var response ErrorResponse
 		response.Status = 400
 		response.Message = fmt.Sprintf("Data using id %s not found", prodId)
 		w.WriteHeader(400)
@@ -112,28 +117,27 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	_,errQuerry := db.Query(`DELETE FROM products WHERE id = ?;`, prodId)
+	_, errQuerry := db.Query(`DELETE FROM products WHERE id = ?;`, prodId)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
 		w.WriteHeader(200)
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 		w.WriteHeader(500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateProduct(w http.ResponseWriter, r *http.Request){
-	db := connect()
+func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	db := Connect()
 	defer db.Close()
 
 	err := r.ParseForm()
-	var response ErrorResponse
 
 	if err != nil {
 		var response ErrorResponse
@@ -149,6 +153,7 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request){
 	data, _ := db.Query(`SELECT * FROM products WHERE id = ?;`, prodId)
 
 	if data == nil {
+		var response ErrorResponse
 		response.Status = 400
 		response.Message = fmt.Sprintf("Data using id %s not found", prodId)
 		w.WriteHeader(400)
@@ -157,20 +162,20 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	name := r.Form.Get("name")
-	price := strconv.Atoi(r.Form.Get("price"))
+	price, _ := strconv.Atoi(r.Form.Get("price"))
 
-	_,errQuerry := db.Exec("UPDATE users set name = ?, price = ? WHERE id = ?;",name,price,prodId)
+	_, errQuerry := db.Exec("UPDATE users set name = ?, price = ? WHERE id = ?;", name, price, prodId)
 
 	var response UserResponse
 	if errQuerry == nil {
-		response.Status =200
+		response.Status = 200
 		response.Message = "success"
 		w.WriteHeader(200)
-	}else{
+	} else {
 		response.Status = 500
 		response.Message = "Internal server error"
 		w.WriteHeader(500)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(respose)
+	json.NewEncoder(w).Encode(response)
 }
