@@ -180,3 +180,53 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func GetUserDetailTransaction(w http.ResponseWriter, r *http.Request) {
+	db := Connect()
+	defer db.Close()
+
+	query := "select t.id, u.id, u.name, u.age, u.address, p.id, p.name, p.price, t.quantity from transactions t join users u on t.userId=u.id join products p on t.productId=p.id"
+	id := r.URL.Query()["id"]
+	if id != nil {
+		query += "where u.id = " + id[0]
+	}
+	rows, err := db.Query(query)
+
+	if err != nil {
+		var response ErrorResponse
+		response.Status = 500
+		response.Message = "Internal server error"
+		w.WriteHeader(500)
+		log.Println(err)
+		return
+	}
+
+	var listTransaksiDetails []TransactionDetail
+	var transactionDetail TransactionDetail
+	var user User
+	var product Product
+
+	for rows.Next() {
+		if err := rows.Scan(&transactionDetail.ID, &user.ID, &user.Name, &user.Age, &user.Address, &product.ID, &product.Name, &product.Price, &transactionDetail.Quantity); err != nil {
+			log.Println(err)
+			return
+		} else {
+			transactionDetail.User = user
+			transactionDetail.Product = product
+			listTransaksiDetails = append(listTransaksiDetails, transactionDetail)
+		}
+	}
+
+	var response TransactionDetailsResponse
+	if len(listTransaksiDetails) > 0 {
+		response.Status = 200
+		response.Message = "Success Get Data"
+		response.Data = listTransaksiDetails
+	} else {
+		response.Status = 400
+		response.Message = "Error Get Data"
+		w.WriteHeader(400)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
