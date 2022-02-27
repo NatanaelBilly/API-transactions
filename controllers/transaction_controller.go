@@ -76,10 +76,36 @@ func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
 	userId := r.Form.Get("userid")
 	productId := r.Form.Get("productid")
 	quantity, _ := strconv.Atoi(r.Form.Get("quantity"))
-
+	rows, errorQuery := db.Query(`select * from products where id=?`, productId)
+	if errorQuery != nil {
+		var response ErrorResponse
+		response.Status = 400
+		response.Message = err.Error()
+		w.WriteHeader(400)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	var i int = 0
+	for rows.Next() {
+		i++
+	}
+	fmt.Print(i)
+	if i == 0 {
+		_, err = db.Exec("INSERT INTO products (id) VALUES (?)", productId)
+		if err != nil {
+			var response ErrorResponse
+			response.Status = 400
+			response.Message = err.Error()
+			w.WriteHeader(400)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+	}
 	_, errQuerry := db.Exec("INSERT INTO transactions(userid, productid, quantity) VALUES (?,?,?);", userId, productId, quantity)
 
-	var response UserResponse
+	var response TransactionResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
@@ -119,7 +145,7 @@ func DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 	_, errQuerry := db.Query(`DELETE FROM transactions WHERE id = ?;`, transId)
 
-	var response UserResponse
+	var response TransactionResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
@@ -167,7 +193,7 @@ func UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 	_, errQuerry := db.Exec("UPDATE users set userid = ?, productid = ?, quantity = ? WHERE id = ?;", userId, productId, quantity, transId)
 
-	var response UserResponse
+	var response TransactionResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"

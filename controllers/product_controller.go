@@ -79,7 +79,7 @@ func InsertNewProduct(w http.ResponseWriter, r *http.Request) {
 
 	_, errQuerry := db.Exec("INSERT INTO products(name, price) VALUES (?,?);", name, price)
 
-	var response UserResponse
+	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
@@ -119,7 +119,7 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	_, errQuerry := db.Query(`DELETE FROM products WHERE id = ?;`, prodId)
 
-	var response UserResponse
+	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
@@ -166,7 +166,7 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 	_, errQuerry := db.Exec("UPDATE users set name = ?, price = ? WHERE id = ?;", name, price, prodId)
 
-	var response UserResponse
+	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
