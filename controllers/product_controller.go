@@ -117,12 +117,13 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	_, errQuery := db.Exec("DELETE FROM transactions WHERE productId=?",prodId)
 	_, errQuerry := db.Query(`DELETE FROM products WHERE id = ?;`, prodId)
 
 	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
-		response.Message = "success"
+		response.Message = "delete success"
 		w.WriteHeader(200)
 	} else {
 		response.Status = 500
@@ -169,7 +170,7 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
-		response.Message = "success"
+		response.Message = "update success"
 		w.WriteHeader(200)
 	} else {
 		response.Status = 500
