@@ -26,7 +26,7 @@ func main() {
 	router.HandleFunc("/transactions", controllers.InsertNewTransaction).Methods("POST")
 	router.HandleFunc("/transactions/{id}", controllers.UpdateTransaction).Methods("PUT")
 	router.HandleFunc("/transactions/{id}", controllers.DeleteProduct).Methods("DELETE")
-	router.HandleFunc("/transactions", controllers.GetUserDetailTransaction).Methods("GET")
+	router.HandleFunc("/detailTransactions", controllers.GetUserDetailTransaction).Methods("GET")
 
 	http.Handle("/", router)
 	fmt.Println("Connected to port 8000")

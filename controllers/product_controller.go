@@ -118,9 +118,14 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, errQuery := db.Exec("DELETE FROM transactions WHERE productId=?",prodId)
+	var response ProductResponse
+	if errQuery != nil {
+		response.Status = 500
+		response.Message = "delete failed"
+		w.WriteHeader(200)
+	}
 	_, errQuerry := db.Query(`DELETE FROM products WHERE id = ?;`, prodId)
 
-	var response ProductResponse
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "delete success"

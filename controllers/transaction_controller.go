@@ -76,6 +76,7 @@ func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
 	userId := r.Form.Get("userid")
 	productId := r.Form.Get("productid")
 	quantity, _ := strconv.Atoi(r.Form.Get("quantity"))
+	fmt.Println(productId)
 	rows, errorQuery := db.Query(`select * from products where id=?`, productId)
 	if errorQuery != nil {
 		var response ErrorResponse
@@ -90,9 +91,9 @@ func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		i++
 	}
-	fmt.Print(i)
 	if i == 0 {
 		_, err = db.Exec("INSERT INTO products (id) VALUES (?)", productId)
+		fmt.Println(productId)
 		if err != nil {
 			var response ErrorResponse
 			response.Status = 400
@@ -103,7 +104,10 @@ func InsertNewTransaction(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	_, errQuerry := db.Exec("INSERT INTO transactions(userid, productid, quantity) VALUES (?,?,?);", userId, productId, quantity)
+	fmt.Println(userId)
+	fmt.Println(productId)
+	fmt.Println(quantity)
+	_, errQuerry := db.Exec("INSERT INTO transactions(userid, productid, quantity) VALUES (?,?,?)", userId, productId, quantity)
 
 	var response TransactionResponse
 	if errQuerry == nil {
