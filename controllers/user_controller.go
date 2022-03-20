@@ -32,7 +32,7 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	// get data
 	for rows.Next() {
-		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Address)
+		err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Address, &user.email, &user.password)
 		if err != nil { // error response
 			var response ErrorResponse
 			response.Status = 400
@@ -171,6 +171,41 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if errQuerry == nil {
 		response.Status = 200
 		response.Message = "success"
+		w.WriteHeader(200)
+	} else {
+		response.Status = 500
+		response.Message = "Internal server error"
+		w.WriteHeader(500)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	db := Connect()
+	defer db.Close()
+
+	err := r.ParseForm()
+
+	if err != nil {
+		var response ErrorResponse
+		response.Status = 500
+		response.Message = "Internal server error"
+		w.WriteHeader(500)
+		log.Println(err)
+		return
+	}
+	var user User
+	user.email = r.Form.Get("email")
+	user.password = r.Form.Get("password")
+	fmt.Println(user.email)
+	fmt.Println(user.password)
+	_, errQuerry := db.Query("select * from users  WHERE email = ? AND password = ?;", user.email, user.password)
+
+	var response UserResponse
+	if errQuerry == nil {
+		response.Status = 200
+		response.Message = "login success"
 		w.WriteHeader(200)
 	} else {
 		response.Status = 500
